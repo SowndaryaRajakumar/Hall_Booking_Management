@@ -1,0 +1,89 @@
+.hall-review-container {
+  text-align: center;
+  padding: 30px;
+  background-color: #f4f4f4;
+  min-height: 100vh;
+}
+
+.hall-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.hall-card {
+  position: relative;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 280px;
+  text-align: center;
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.hall-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hall-image {
+  width: 100%;
+  height: 160px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+/* Transparent Overlay for Details */
+.hall-details-overlay {
+  position: absolute;
+  bottom: 0;  /* Start from bottom */
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7); /* Dark transparent background */
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start; /* Align text to the left */
+  padding: 20px;
+  opacity: 0;
+  transform: translateY(100%);  /* Move overlay out of view initially */
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.hall-card:hover .hall-details-overlay {
+  opacity: 1;
+  transform: translateY(0);  /* Bring overlay into view */
+}
+
+.hall-details-overlay p {
+  font-size: 14px;
+  margin: 5px 0;
+  color: #f1f1f1;
+  text-align: left; /* Align text inside the overlay to the left */
+}
+
+.hall-details-overlay strong {
+  color: #fff;
+}
+
+.adding-btn {
+  padding: 10px 15px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: 0.3s ease-in-out;
+  background-color: #007bff;
+  color: white;
+}

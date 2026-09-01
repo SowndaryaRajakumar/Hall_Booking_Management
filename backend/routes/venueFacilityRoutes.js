@@ -1,0 +1,11 @@
+const express = require('express');
+const controller = require('../controllers/venueFacilityController');
+const authenticateToken = require('../middlewares/authMiddleware');
+const requireAdmin = require('../middlewares/requireAdmin');
+const router = express.Router();
+router.get('/', controller.listVenueFacilities);
+router.get('/admin', authenticateToken, requireAdmin, controller.listVenueFacilities);
+router.post('/', authenticateToken, requireAdmin, controller.createVenueFacility);
+router.put('/:id', authenticateToken, requireAdmin, controller.updateVenueFacility);
+router.delete('/:id', authenticateToken, requireAdmin, controller.deleteVenueFacility);
+module.exports = router;

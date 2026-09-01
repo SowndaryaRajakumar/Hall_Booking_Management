@@ -1,0 +1,72 @@
+.requests-container {
+    max-width: 900px;
+    margin: 50px auto;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  h2 {
+    font-size: 28px;
+    color: #333;
+    margin-bottom: 30px;
+    font-weight: bold;
+  }
+  
+  .requests-links {
+    display: flex;
+    justify-content: space-around;
+    gap: 20px;
+  }
+  
+  .request-card {
+    flex: 1;
+    max-width: 250px;
+    padding: 30px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .request-card h3 {
+    margin: 0;
+  }
+  
+  /* 🎗️ Color styles for each request type */
+  .pending {
+    background-color: #ffcc00;
+  }
+  
+  .approved {
+    background-color: #4CAF50;
+  }
+  
+  .rejected {
+    background-color: #FF5733;
+  }
+  
+  /* 🖱️ Hover Effects */
+  .request-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* 📱 Responsive Design */
+  @media (max-width: 768px) {
+    .requests-links {
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    .request-card {
+      max-width: 100%;
+      padding: 20px;
+    }
+  }
+  

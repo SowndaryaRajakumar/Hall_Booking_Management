@@ -1,0 +1,53 @@
+/* ✅ Scoped styles for Rejected Requests */
+.rejected-requests-container {
+    max-width: 900px;
+    margin: 50px auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.rejected-requests-container h2 {
+    font-size: 28px;
+    color: #b91c1c;
+    /* Red color for rejection */
+    margin-bottom: 30px;
+    font-weight: bold;
+}
+
+.no-rejected-requests {
+    font-size: 18px;
+    color: #777;
+    margin-top: 20px;
+}
+
+/* ✅ Request Card Styling */
+.rejected-request-card {
+    background-color: #fbeaea;
+    /* Light red for rejected requests */
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.rejected-request-card h3 {
+    font-size: 20px;
+    color: #991b1b;
+    margin-bottom: 10px;
+}
+
+.rejected-request-card p {
+    font-size: 16px;
+    color: #444;
+    margin: 5px 0;
+}
+
+/* 📱 Responsive Design */
+@media (max-width: 768px) {
+    .rejected-request-card {
+        padding: 15px;
+    }
+}

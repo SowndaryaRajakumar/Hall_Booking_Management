@@ -1,0 +1,77 @@
+.hall-details-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f4f4f9;
+}
+
+.hall-card-details {
+  display: flex;
+  flex-direction: row;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 60%;
+  max-width: 800px;
+}
+
+.hall-details-image {
+  width: 250px;
+  height: 200px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-right: 20px;
+}
+
+.hall-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.hall-info h2 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.hall-info p {
+  font-size: 16px;
+  color: #555;
+  margin: 5px 0;
+}
+
+.hall-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.update-btn, .remove-btn {
+  padding: 10px 15px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: 0.3s ease-in-out;
+}
+
+.update-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+.remove-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.update-btn:hover {
+  background-color: #0056b3;
+}
+
+.remove-btn:hover {
+  background-color: #b02a37;
+}
