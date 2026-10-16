@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Calendar,
   Building2,
@@ -44,8 +45,8 @@ const getDateRange = (from, to) => {
   return result;
 };
 
-const formatDate = (value) =>
-  new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", {
+const formatDate = (value, language = "en") =>
+  new Date(`${value}T00:00:00`).toLocaleDateString({ en: "en-IN", ta: "ta-IN", hi: "hi-IN" }[language?.split("-")[0]] || "en-IN", {
     weekday: "long",
     day: "2-digit",
     month: "short",
@@ -53,6 +54,7 @@ const formatDate = (value) =>
   });
 
 const Timetable = () => {
+  const { t, i18n } = useTranslation();
   const today = localDate();
   const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
@@ -88,13 +90,13 @@ const Timetable = () => {
           setSelectedHallName(name || "");
         }
       } catch (err) {
-        setError(err.message || "Failed to load venues");
+        setError(err.message || t("timetable.failedLoadVenues"));
       } finally {
         setLoadingHalls(false);
       }
     };
     load();
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!selectedHallId || !dates.length) {
@@ -134,7 +136,7 @@ const Timetable = () => {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err.message || "Failed to load timetable");
+          setError(err.message || t("timetable.failedLoad"));
           setDailyAvailability([]);
         }
       } finally {
@@ -146,7 +148,7 @@ const Timetable = () => {
     return () => {
       cancelled = true;
     };
-  }, [selectedHallId, dateFrom, dateTo]);
+  }, [selectedHallId, dateFrom, dateTo, t]);
 
   const handleHallChange = (e) => {
     const id = e.target.value;

@@ -32,14 +32,14 @@ exports.getAdminDashboard = async (req, res) => {
       `
       SELECT COUNT(*) AS totalFaculty
       FROM staff
-      WHERE role = 'staff'
+      WHERE role IN ('staff', 'FACULTY')
       `,
 
       // 4. Total Admins
       `
       SELECT COUNT(*) AS totalAdmins
       FROM staff
-      WHERE role = 'admin'
+      WHERE role IN ('admin', 'MASTER_ADMIN', 'DEPARTMENT_ADMIN')
       `,
 
       // 5. Pending Bookings
@@ -443,6 +443,41 @@ exports.getFacultyDashboard = async (req, res) => {
       reason: booking.reason,
     }));
 
+    // Query Academic Allocation stats for this faculty
+    const [[allocCountRow]] = await pool.query(
+      `SELECT COUNT(*) AS total,
+              SUM(CASE WHEN aa.status = 'PENDING' THEN 1 ELSE 0 END) AS pendingTotal
+       FROM academic_allocations aa
+       JOIN staff s ON aa.faculty_id = s.staff_id
+       WHERE s.email = ?`,
+      [facultyEmail]
+    );
+
+    // Query today's classes from academic allocations
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    const dayOfWeekIdx = today.getDay(); // 0-6
+
+    const [todayClasses] = await pool.query(
+      `SELECT aa.id AS allocation_id, aa.subject_name, aa.subject_code, aa.year_of_study, aa.section,
+              h.HallName AS venue_name, h.Location AS venue_location,
+              aar.period_id, aar.start_time, aar.end_time,
+              COALESCE(o.status, 'SCHEDULED') AS occurrence_status,
+              o.remark
+       FROM academic_allocations aa
+       JOIN academic_allocation_rules aar ON aa.id = aar.allocation_id
+       JOIN halls h ON aa.venue_id = h.HallID
+       JOIN staff s ON aa.faculty_id = s.staff_id
+       LEFT JOIN academic_allocation_occurrences o
+              ON o.allocation_id = aa.id AND o.occurrence_date = ? AND o.period_id = aar.period_id
+       WHERE s.email = ?
+         AND aa.status = 'APPROVED'
+         AND aa.start_date <= ? AND aa.end_date >= ?
+         AND aar.day_index = ?
+       ORDER BY aar.period_id ASC`,
+      [todayStr, facultyEmail, todayStr, todayStr, dayOfWeekIdx]
+    );
+
     /*
      * Send response.
      */
@@ -455,6 +490,13 @@ exports.getFacultyDashboard = async (req, res) => {
         approvedBookings,
         cancelledBookings,
         recentBookings,
+        semesterAllocations: allocCountRow.total || 0,
+        pendingAllocations: allocCountRow.pendingTotal || 0,
+        todayClasses: todayClasses.map((c) => ({
+          ...c,
+          startTime: String(c.start_time).slice(0, 5),
+          endTime: String(c.end_time).slice(0, 5),
+        })),
       },
     });
 

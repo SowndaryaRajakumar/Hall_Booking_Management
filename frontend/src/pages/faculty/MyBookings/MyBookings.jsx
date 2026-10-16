@@ -1,22 +1,26 @@
 import { useEffect, useState } from "react";
-import { Eye, Search, XCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Eye, Search, XCircle, History } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import FacultyLayout from "../../../layouts/FacultyLayout";
 import BookingStatusBadge from "../../../components/faculty/BookingStatusBadge";
 import PageHeader from "../../../components/faculty/PageHeader";
 import DetailModal from "../../../components/faculty/DetailModal";
+import BookingAuditModal from "../../../components/bookings/BookingAuditModal";
 import { cancelBooking, getFacultyBookings } from "../../../api/bookingApi";
 import Pagination from "../../../components/Pagination";
 
 const statuses = ["All", "Pending", "Approved", "Rejected", "Cancelled"];
 
 const MyBookings = () => {
+  const { t } = useTranslation();
   const [bookings, setBookings] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [auditBooking, setAuditBooking] = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
@@ -50,17 +54,12 @@ const MyBookings = () => {
   }, [currentPage, search, statusFilter]);
 
   const handleCancel = async (booking) => {
-    if (!window.confirm("Are you sure?")) return;
-    if (!["Pending", "Approved"].includes(booking.status)) {
-      toast.error("Only pending or approved bookings can be cancelled.");
-      return;
-    }
-
+    if (!window.confirm(t("myBookings.confirmCancel"))) return;
     try {
       setCancellingId(booking.id);
       await cancelBooking(booking.id);
-      toast.success("Booking cancelled successfully.");
-      await fetchBookings();
+      toast.success(t("myBookings.cancellationSuccess"));
+      fetchBookings();
     } catch (error) {
       toast.error(error.message || "Failed to cancel booking");
     } finally {
@@ -68,12 +67,12 @@ const MyBookings = () => {
     }
   };
 
-  if (loading) {
+  if (loading && bookings.length === 0) {
     return (
       <FacultyLayout>
-        <div className="space-y-4">
-          <div className="h-10 w-72 animate-pulse rounded-full bg-slate-200" />
-          <div className="h-80 animate-pulse rounded-2xl bg-slate-200" />
+        <div className="space-y-6">
+          <div className="h-10 w-64 animate-pulse rounded-full bg-slate-200" />
+          <div className="h-96 animate-pulse rounded-2xl bg-slate-200" />
         </div>
       </FacultyLayout>
     );
@@ -82,44 +81,47 @@ const MyBookings = () => {
   return (
     <FacultyLayout>
       <div className="space-y-6">
-        <PageHeader title="My Bookings" description="Track and manage your venue requests." />
+        <PageHeader title={t("myBookings.title")} description={t("myBookings.subtitle")} />
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="relative w-full lg:max-w-sm">
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} placeholder="Search bookings" className="w-full rounded-xl border border-slate-300 pl-10 pr-3 py-2.5 focus:border-blue-500 focus:outline-none" />
+              <input value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} placeholder={t("common.search")} className="w-full rounded-xl border border-slate-300 pl-10 pr-3 py-2.5 focus:border-blue-500 focus:outline-none text-xs" />
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {statuses.map((status) => (
-                <button key={status} type="button" onClick={() => { setStatusFilter(status); setCurrentPage(1); }} className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${statusFilter === status ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
-                  {status}
-                </button>
-              ))}
+              {statuses.map((status) => {
+                const label = status === "All" ? t("myBookings.all") : t(`status.${status.toLowerCase()}`, status);
+                return (
+                  <button key={status} type="button" onClick={() => { setStatusFilter(status); setCurrentPage(1); }} className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition cursor-pointer ${statusFilter === status ? "bg-blue-700 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>
+                    {label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           <div className="mt-6 overflow-x-auto">
             {bookings.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">No bookings found for your current search.</div>
+              <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">{t("dashboard.noBookingsFound")}</div>
             ) : (
               <table className="responsive-table min-w-full text-left text-sm">
                 <thead className="bg-slate-50 text-slate-600">
                   <tr>
-                    <th className="px-4 py-3 font-semibold">Booking ID</th>
-                    <th className="px-4 py-3 font-semibold">Venue</th>
-                    <th className="px-4 py-3 font-semibold">Date</th>
-                    <th className="px-4 py-3 font-semibold">Time</th>
-                    <th className="px-4 py-3 font-semibold">Purpose</th>
-                    <th className="px-4 py-3 font-semibold">Status</th>
-                    <th className="px-4 py-3 font-semibold">Actions</th>
+                    <th className="px-4 py-3 font-semibold">{t("myBookings.bookingId")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("dashboard.venue")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("dashboard.date")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("dashboard.time")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("dashboard.purpose")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("dashboard.status")}</th>
+                    <th className="px-4 py-3 font-semibold">{t("dashboard.actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {bookings.map((booking) => (
                     <tr key={booking.id} className="border-t border-slate-100 hover:bg-slate-50">
-                      <td className="px-4 py-3 font-medium text-slate-700">{booking.id}</td>
+                      <td className="px-4 py-3 font-medium text-slate-700">#{booking.id}</td>
                       <td className="px-4 py-3">{booking.venue}</td>
                       <td className="px-4 py-3">{booking.date}</td>
                       <td className="px-4 py-3">{booking.time}</td>
@@ -127,12 +129,20 @@ const MyBookings = () => {
                       <td className="px-4 py-3"><BookingStatusBadge status={booking.status} /></td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
-                          <button type="button" onClick={() => setSelectedBooking(booking)} className="rounded-lg border border-blue-200 px-3 py-1.5 text-sm font-medium text-blue-700 transition hover:bg-blue-50">
-                            <span className="flex items-center gap-1"><Eye size={14} /> View</span>
+                          <button type="button" onClick={() => setSelectedBooking(booking)} className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 cursor-pointer">
+                            <span className="flex items-center gap-1"><Eye size={14} /> {t("dashboard.viewAll")}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAuditBooking(booking)}
+                            className="rounded-lg border border-purple-200 px-3 py-1.5 text-xs font-semibold text-purple-700 transition hover:bg-purple-50 cursor-pointer"
+                            title={t("audit.history", "History")}
+                          >
+                            <span className="flex items-center gap-1"><History size={14} /> {t("audit.history", "History")}</span>
                           </button>
                           {["Pending", "Approved"].includes(booking.status) && (
-                            <button type="button" disabled={cancellingId === booking.id} onClick={() => handleCancel(booking)} className="rounded-lg border border-rose-200 px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50 disabled:opacity-60">
-                              <span className="flex items-center gap-1"><XCircle size={14} /> {cancellingId === booking.id ? "Cancelling..." : "Cancel"}</span>
+                            <button type="button" disabled={cancellingId === booking.id} onClick={() => handleCancel(booking)} className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-60 cursor-pointer">
+                              <span className="flex items-center gap-1"><XCircle size={14} /> {cancellingId === booking.id ? t("common.loading") : t("myBookings.cancelBooking")}</span>
                             </button>
                           )}
                         </div>
@@ -148,7 +158,13 @@ const MyBookings = () => {
       </div>
 
       {selectedBooking && (
-        <DetailModal title="Booking Details" subtitle={selectedBooking.id} rows={[{ label: "Venue", value: selectedBooking.venue }, { label: "Date", value: selectedBooking.date }, { label: "Time", value: selectedBooking.time }, { label: "Purpose", value: selectedBooking.purpose }, { label: "Status", value: selectedBooking.status }, { label: "Remarks", value: selectedBooking.remarks || "-" }]} onClose={() => setSelectedBooking(null)} />
+        <DetailModal title={t("bookVenue.confirmBooking")} subtitle={`BK${selectedBooking.id}`} rows={[{ label: t("dashboard.venue"), value: selectedBooking.venue }, { label: t("dashboard.date"), value: selectedBooking.date }, { label: t("dashboard.time"), value: selectedBooking.time }, { label: t("dashboard.purpose"), value: selectedBooking.purpose }, { label: t("dashboard.status"), value: selectedBooking.status }, { label: t("myBookings.reason"), value: selectedBooking.remarks || "-" }]} onClose={() => setSelectedBooking(null)} />
+      )}
+      {auditBooking && (
+        <BookingAuditModal
+          booking={auditBooking}
+          onClose={() => setAuditBooking(null)}
+        />
       )}
       <ToastContainer position="top-right" autoClose={3000} />
     </FacultyLayout>

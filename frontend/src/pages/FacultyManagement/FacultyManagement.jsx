@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Plus,
   Search,
@@ -17,6 +18,7 @@ import EditFacultyModal from "./EditFacultyModal";
 import Pagination from "../../components/Pagination";
 
 const FacultyManagement = () => {
+  const { t } = useTranslation();
   const [staff, setStaff] = useState([]);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,21 +73,21 @@ const FacultyManagement = () => {
 
   return (
     <AdminLayout>
-      <div className="p-6">
+      <div className="p-4 sm:p-6 min-w-0">
 
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
 
-          <h1 className="text-3xl font-bold">
-            Faculty Management
+          <h1 className="page-title text-2xl sm:text-3xl font-bold text-gray-800 break-words min-w-0">
+            {t("nav.facultyManagement", "Faculty Management")}
           </h1>
 
           <button
             onClick={() => setShowModal(true)}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
+            className="w-full sm:w-auto bg-blue-600 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition font-medium cursor-pointer"
           >
             <Plus size={18} />
-            Add Faculty
+            {t("faculty.addFaculty", "Add Faculty")}
           </button>
 
         </div>
@@ -100,30 +102,30 @@ const FacultyManagement = () => {
 
           <input
             type="text"
-            placeholder="Search faculty..."
+            placeholder={t("common.search", "Search...")}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-            className="pl-10 w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="pl-10 w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
           />
 
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow overflow-hidden">
+        <div className="bg-white rounded-xl shadow overflow-x-auto">
 
-          <table className="w-full">
+          <table className="w-full text-sm">
 
             <thead className="bg-gray-100">
               <tr>
-                <th className="p-4 text-left">ID</th>
-                <th className="p-4 text-left">Faculty Name</th>
-                <th className="p-4 text-left">Email</th>
-                <th className="p-4 text-left">Department</th>
-                <th className="p-4 text-left">Designation</th>
-                <th className="p-4 text-left">Employee ID</th>
-                <th className="p-4 text-left">Role</th>
-                <th className="p-4 text-left">Status</th>
-                <th className="p-4 text-center">Actions</th>
+                <th className="p-4 text-left font-semibold">ID</th>
+                <th className="p-4 text-left font-semibold">Faculty Name</th>
+                <th className="p-4 text-left font-semibold">Email</th>
+                <th className="p-4 text-left font-semibold">Department</th>
+                <th className="p-4 text-left font-semibold">Designation</th>
+                <th className="p-4 text-left font-semibold">Employee ID</th>
+                <th className="p-4 text-left font-semibold">Role</th>
+                <th className="p-4 text-left font-semibold">Status</th>
+                <th className="p-4 text-center font-semibold">Actions</th>
               </tr>
             </thead>
 
@@ -164,15 +166,7 @@ const FacultyManagement = () => {
 
                     <td className="p-4">
 
-                      {faculty.role === "admin" ? (
-                        <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
-                          Administrator
-                        </span>
-                      ) : (
-                        <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                          Faculty
-                        </span>
-                      )}
+                      <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">Faculty</span>
 
                     </td>
 

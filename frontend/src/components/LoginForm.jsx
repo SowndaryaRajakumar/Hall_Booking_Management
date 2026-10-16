@@ -60,6 +60,12 @@ const LoginForm = () => {
       localStorage.setItem("role", data.user.role);
       localStorage.setItem("email", data.user.email);
       localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("permissions", JSON.stringify(data.user.permissions || []));
+      localStorage.setItem("name", data.user.name || "");
+      localStorage.setItem("department", data.user.department || "");
+      if (data.user.departmentId) {
+        localStorage.setItem("departmentId", String(data.user.departmentId));
+      }
 
       setStaffId(data.user.id);
 
@@ -70,7 +76,8 @@ const LoginForm = () => {
       }
 
       // Navigate
-      if (data.user.role === "admin") {
+      const role = String(data.user.role || "").toUpperCase();
+      if (role === "MASTER_ADMIN" || role === "ADMIN" || role === "DEPARTMENT_ADMIN") {
         navigate("/admin/dashboard");
       } else {
         navigate("/faculty/dashboard");

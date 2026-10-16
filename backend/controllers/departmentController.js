@@ -32,7 +32,16 @@ exports.getAllDepartments = async (req, res) => {
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const [[countRow]] = await pool.query(`SELECT COUNT(*) AS total FROM Departments ${where}`, params);
     const [rows] = await pool.query(`SELECT DeptID, DeptName, DeptCode, IsActive, CreatedAt, UpdatedAt FROM Departments ${where} ORDER BY DeptName LIMIT ? OFFSET ?`, [...params, limit, offset]);
-    res.json({ data: rows, pagination: makePagination({ page, limit, total: countRow.total }) });
+    const normalized = rows.map((d) => ({
+      ...d,
+      id: d.DeptID,
+      deptId: d.DeptID,
+      department_id: d.DeptID,
+      name: d.DeptName,
+      deptName: d.DeptName,
+      department_name: d.DeptName,
+    }));
+    res.json({ data: normalized, pagination: makePagination({ page, limit, total: countRow.total }) });
   } catch (error) {
     console.error('Error fetching departments:', error);
     res.status(500).json({ message: 'Failed to fetch departments.' });

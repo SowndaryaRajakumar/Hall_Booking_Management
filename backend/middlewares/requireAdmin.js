@@ -1,5 +1,8 @@
+const { normalizeRole } = require('./permissionMiddleware');
+
 const requireAdmin = (req, res, next) => {
-  if (req.user?.role !== 'admin') {
+  const role = normalizeRole(req.user?.role);
+  if (role !== 'MASTER_ADMIN' && role !== 'DEPARTMENT_ADMIN') {
     return res.status(403).json({ message: 'Admin access is required.' });
   }
 

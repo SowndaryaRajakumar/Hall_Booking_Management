@@ -85,3 +85,35 @@ export const deleteHall = async (id) => {
 
   return data;
 };
+
+// Smart Venue Recommendation
+export const getRecommendedVenues = async ({ date, period, venueType = "", facilities = [] }) => {
+  const token = localStorage.getItem("token");
+  const params = new URLSearchParams({
+    date,
+    period,
+  });
+  if (venueType && venueType !== "all") {
+    params.set("venueType", venueType);
+  }
+  if (Array.isArray(facilities) && facilities.length > 0) {
+    params.set("facilities", facilities.join(","));
+  } else if (typeof facilities === "string" && facilities.trim()) {
+    params.set("facilities", facilities.trim());
+  }
+
+  const response = await fetch(`http://localhost:5000/api/venues/recommend?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message || data.error || "Failed to find recommended venues");
+  }
+
+  return data;
+};

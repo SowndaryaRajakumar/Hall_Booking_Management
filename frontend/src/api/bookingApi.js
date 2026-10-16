@@ -19,7 +19,13 @@ const parseResponse = async (response) => {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.message || data.error || "Request failed");
+    const err = new Error(data.message || data.error || "Request failed");
+    err.status = response.status;
+    err.data = data;
+    err.conflict = data.conflict;
+    err.alternatives = data.alternatives;
+    err.conflictDetails = data.conflictDetails;
+    throw err;
   }
 
   return data;
@@ -96,3 +102,33 @@ export const cancelBooking = async (id) => {
 
   return parseResponse(response);
 };
+
+export const createRecurringBookingApi = async (payload) => {
+  const response = await fetch(`${BASE_URL}/recurring`, {
+    method: "POST",
+    headers: buildHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  return parseResponse(response);
+};
+
+export const getBookingAuditLogs = async (bookingId) => {
+  const response = await fetch(`${BASE_URL}/${bookingId}/audit`, {
+    headers: buildHeaders(false),
+  });
+
+  return parseResponse(response);
+};
+
+export const getAllAuditLogs = async ({ limit = 100, offset = 0 } = {}) => {
+  const params = new URLSearchParams({ limit, offset });
+  const response = await fetch(`${BASE_URL}/audit-logs?${params.toString()}`, {
+    headers: buildHeaders(false),
+  });
+
+  return parseResponse(response);
+};
+
+export { getRecommendedVenues } from "./hallApi";
+

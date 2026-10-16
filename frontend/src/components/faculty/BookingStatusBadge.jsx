@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 const statusStyles = {
   Pending: "bg-amber-100 text-amber-700",
   Approved: "bg-emerald-100 text-emerald-700",
@@ -7,9 +9,14 @@ const statusStyles = {
 };
 
 const BookingStatusBadge = ({ status }) => {
+  const { t } = useTranslation();
+  const rawStatus = String(status || "Pending").trim();
+  const translationKey = `status.${rawStatus.toLowerCase()}`;
+  const displayLabel = t(translationKey, rawStatus);
+
   return (
-    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[status] || "bg-slate-100 text-slate-700"}`}>
-      {status}
+    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[rawStatus] || "bg-slate-100 text-slate-700"}`}>
+      {displayLabel}
     </span>
   );
 };

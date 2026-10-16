@@ -3,19 +3,20 @@ const router = express.Router();
 const authenticateToken = require('../middlewares/authMiddleware');
 const dashboardController = require('../controllers/dashboardController');
 
+const { normalizeRole } = require('../middlewares/permissionMiddleware');
+
 // Admin dashboard routes require authentication AND admin role
 const requireAdmin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+  const role = normalizeRole(req.user?.role);
+  if (role === 'MASTER_ADMIN' || role === 'DEPARTMENT_ADMIN') {
     return next();
   }
   return res.status(403).json({ success: false, message: 'Forbidden - Admin access only' });
 };
 
 const requireFaculty = (req, res, next) => {
-  if (
-    req.user &&
-    (req.user.role === "faculty" || req.user.role === "staff")
-  ) {
+  const role = normalizeRole(req.user?.role);
+  if (role === 'FACULTY' || role === 'MASTER_ADMIN' || role === 'DEPARTMENT_ADMIN') {
     return next();
   }
 

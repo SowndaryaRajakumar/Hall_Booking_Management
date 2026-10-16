@@ -21,7 +21,7 @@ export const getAllStaff = async (token, { page = 1, limit = 10, search = "" } =
   return data;
 };
 
-// Add new staff (we'll use this later)
+// Add new staff
 export const addStaff = async (staffData, token) => {
   const response = await fetch(BASE_URL, {
     method: "POST",
@@ -37,7 +37,7 @@ export const addStaff = async (staffData, token) => {
   return data;
 };
 
-// Update staff (later)
+// Update staff (Admin Faculty Management)
 export const updateStaff = async (id, staffData, token) => {
   const response = await fetch(`${BASE_URL}/${id}`, {
     method: "PUT",
@@ -57,7 +57,7 @@ export const updateStaff = async (id, staffData, token) => {
   return data;
 };
 
-// Delete staff (later)
+// Delete staff
 export const deleteStaff = async (id, token) => {
   const response = await fetch(`${BASE_URL}/${id}`, {
     method: "DELETE",
@@ -70,25 +70,44 @@ export const deleteStaff = async (id, token) => {
   return response.json();
 };
 
-// Get current authenticated staff profile
+// Get current authenticated staff/user profile
 export const getProfile = async (token) => {
+  const authToken = token || (typeof window !== "undefined" ? localStorage.getItem("token") : "");
+
+  try {
+    const response = await fetch("http://localhost:5000/api/profile", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.data) return data.data;
+    }
+  } catch (err) {
+    // Fallback to /api/staff/profile if /api/profile was unreachable
+  }
+
   const response = await fetch(`${BASE_URL}/profile`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+      "Content-Type": "application/json",
     },
   });
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || 'Failed to fetch profile');
+    throw new Error(data.message || "Failed to fetch profile");
   }
 
   if (!data.data) {
-    throw new Error('Profile response did not contain faculty data');
+    throw new Error("Profile response did not contain faculty data");
   }
 
-  return data.data; // normalized by backend
+  return data.data;
 };

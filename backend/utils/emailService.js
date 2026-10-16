@@ -198,9 +198,29 @@ const sendPasswordChangeOtp = async ({ email, name, otp }) => {
   });
 };
 
+const sendEmail = async (to, subject, html) => {
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.log(`[EmailService:Simulated] To: ${to} | Subject: ${subject}`);
+      return { sent: true, simulated: true };
+    }
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_FROM || `NEC Venue Portal <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+    return { sent: true, messageId: info.messageId };
+  } catch (error) {
+    console.warn('sendEmail error:', error.message);
+    return { sent: false, error: error.message };
+  }
+};
+
 module.exports = {
   sendBookingConfirmation,
   sendAdminNotification,
   sendStatusUpdate,
-  sendPasswordChangeOtp
+  sendPasswordChangeOtp,
+  sendEmail,
 };

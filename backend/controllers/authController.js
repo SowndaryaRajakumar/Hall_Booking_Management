@@ -5,6 +5,8 @@ const crypto = require('crypto');
 const { sendPasswordChangeOtp } = require('../utils/emailService');
 require('dotenv').config();
 
+const { normalizeRole, getUserPermissions } = require('../middlewares/permissionMiddleware');
+
 const SECRET_KEY = process.env.JWT_SECRET || 'your-secret-key';
 const OTP_TTL_MS = 5 * 60 * 1000;
 const CHANGE_TOKEN_TTL_MS = 10 * 60 * 1000;
@@ -12,7 +14,25 @@ const MAX_OTP_ATTEMPTS = 5;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 const passwordIsStrong = (password) => typeof password === 'string' && password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password) && /[^A-Za-z0-9]/.test(password);
 const tokenHash = (token) => crypto.createHash('sha256').update(token).digest('hex');
-const signAuthToken = (staff) => jwt.sign({ staffId: staff.staff_id, email: staff.email, name: staff.full_name, department: staff.department, role: staff.role, authVersion: staff.auth_version || 0 }, SECRET_KEY, { expiresIn: '24h' });
+
+const signAuthToken = (staff) => {
+  const normalizedRole = normalizeRole(staff.role);
+  return jwt.sign(
+    {
+      staffId: staff.staff_id,
+      id: staff.staff_id,
+      email: staff.email,
+      name: staff.full_name,
+      department: staff.department,
+      departmentId: staff.department_id,
+      role: normalizedRole,
+      rawRole: staff.role,
+      authVersion: staff.auth_version || 0,
+    },
+    SECRET_KEY,
+    { expiresIn: '24h' }
+  );
+};
 
 const login = async (req, res) => {
   try {
@@ -21,6 +41,15 @@ const login = async (req, res) => {
     const [rows] = await pool.execute('SELECT * FROM staff WHERE email = ?', [email]);
     if (!rows.length) return res.status(401).json({ message: 'Invalid email or password' });
     const staff = rows[0];
+
+    // Check account status
+    if (staff.status === 'inactive') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact the administrator.',
+      });
+    }
+
     const storedPassword = String(staff.password || '');
     const isBcryptHash = /^\$2[aby]\$/.test(storedPassword);
     const candidate = Buffer.from(String(password));
@@ -34,11 +63,102 @@ const login = async (req, res) => {
       await pool.execute('UPDATE staff SET password = ? WHERE staff_id = ?', [await bcrypt.hash(password, 12), staff.staff_id]);
       staff.password = null;
     }
+
+    const normalizedRole = normalizeRole(staff.role);
     const token = signAuthToken(staff);
-    res.json({ success: true, token, user: { id: staff.staff_id, name: staff.full_name, email: staff.email, department: staff.department, role: staff.role, isFirstLogin: Boolean(staff.is_first_login) } });
+    const permissions = await getUserPermissions(staff.staff_id, normalizedRole);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: staff.staff_id,
+        name: staff.full_name,
+        email: staff.email,
+        department: staff.department,
+        departmentId: staff.department_id,
+        role: normalizedRole,
+        status: staff.status || 'active',
+        permissions,
+        isFirstLogin: Boolean(staff.is_first_login),
+      },
+    });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+const getCurrentUser = async (req, res) => {
+  try {
+    const staffId = req.user?.staffId || req.user?.id;
+    if (!staffId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const [rows] = await pool.query(
+      `SELECT staff_id, email, full_name, department, department_id, role, status, is_first_login, phone, designation
+       FROM staff WHERE staff_id = ? LIMIT 1`,
+      [staffId]
+    );
+
+    if (!rows.length) return res.status(404).json({ message: 'User not found' });
+    const staff = rows[0];
+
+    const normalizedRole = normalizeRole(staff.role);
+    const permissions = await getUserPermissions(staff.staff_id, normalizedRole);
+
+    res.json({
+      success: true,
+      user: {
+        id: staff.staff_id,
+        name: staff.full_name,
+        email: staff.email,
+        department: staff.department,
+        departmentId: staff.department_id,
+        role: normalizedRole,
+        status: staff.status || 'active',
+        permissions,
+        phone: staff.phone,
+        designation: staff.designation,
+        isFirstLogin: Boolean(staff.is_first_login),
+      },
+      role: normalizedRole,
+      department: staff.department,
+      departmentId: staff.department_id,
+      permissions,
+    });
+  } catch (err) {
+    console.error('getCurrentUser error:', err);
+    res.status(500).json({ message: 'Failed to retrieve user details' });
+  }
+};
+
+const getUserPermissionsHandler = async (req, res) => {
+  try {
+    const staffId = req.user?.staffId || req.user?.id;
+    if (!staffId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const [rows] = await pool.query(
+      `SELECT staff_id, email, full_name, department, department_id, role, status
+       FROM staff WHERE staff_id = ? LIMIT 1`,
+      [staffId]
+    );
+
+    if (!rows.length) return res.status(404).json({ message: 'User not found' });
+    const staff = rows[0];
+
+    const normalizedRole = normalizeRole(staff.role);
+    const permissions = await getUserPermissions(staff.staff_id, normalizedRole);
+
+    res.json({
+      success: true,
+      role: normalizedRole,
+      department: staff.department,
+      departmentId: staff.department_id,
+      permissions,
+    });
+  } catch (err) {
+    console.error('getUserPermissionsHandler error:', err);
+    res.status(500).json({ message: 'Failed to retrieve permissions' });
   }
 };
 
@@ -103,4 +223,4 @@ const changePassword = async (req, res) => {
 
 // Retained only to give old clients a clear safe migration path.
 const resetPassword = (_req, res) => res.status(410).json({ message: 'Use email verification to change your password.' });
-module.exports = { login, resetPassword, sendChangePasswordOtp, verifyChangePasswordOtp, changePassword };
+module.exports = { login, resetPassword, sendChangePasswordOtp, verifyChangePasswordOtp, changePassword, getCurrentUser, getUserPermissionsHandler };
